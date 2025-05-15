@@ -1,6 +1,7 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
+from airflow.models import Variable
 from airflow.hooks.base import BaseHook
 from datetime import datetime, timedelta
 import pandas as pd
@@ -8,9 +9,10 @@ import requests
 import boto3
 import io
 
+
 # === Constants ===
 API_BASE_URL = "http://api.exchangeratesapi.io/v1/"
-ACCESS_KEY = "6e45c8ce217f5beca6893ac6968c5c2f"
+ACCESS_KEY = Variable.get("EXCHANGE_API_ACCESS_KEY")  # Retrieved from Airflow Variables
 S3_BUCKET_NAME = "decourse2025"
 AWS_CONN_ID = "aws_default"
 SQL_CONN_ID = "snowflake_conn"
@@ -83,7 +85,7 @@ with DAG(
         tags=["exchange", "s3", "snowflake"]
 ) as dag:
     upload_to_s3 = PythonOperator(
-        task_id="merge_and_upload_to_s3",
+        task_id="extract_and_upload_to_s3",
         python_callable=merge_and_upload_to_s3,
         provide_context=True
     )
